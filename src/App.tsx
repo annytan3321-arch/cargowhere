@@ -75,6 +75,7 @@ export default function App() {
 
   // Carpark data
   const [liveDataMap, setLiveDataMap] = useState<Record<string, any>>({});
+  const [dataSource, setDataSource] = useState<string>('LTA_DATAMALL');
   const [lastUpdatedTime, setLastUpdatedTime] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [refreshCountdown, setRefreshCountdown] = useState<number>(60);
@@ -95,6 +96,7 @@ export default function App() {
     try {
       const res = await fetchLiveCarparkAvailability();
       setLiveDataMap(res.data);
+      setDataSource(res.source);
       setLastUpdatedTime(new Date(res.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
       setRefreshCountdown(60);
     } catch (err) {
@@ -290,7 +292,11 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 text-[11px] text-slate-500 font-mono">
-            <span>GovTech API · Updated {lastUpdatedTime || 'just now'}</span>
+            <span>
+              {dataSource === 'LTA_DATAMALL'
+                ? 'LTA DataMall (CarParkAvailabilityv2)'
+                : 'GovTech & LTA DataMall proxy'} · Updated {lastUpdatedTime || 'just now'}
+            </span>
           </div>
         </div>
       </div>

@@ -86,11 +86,36 @@ export function toggleFavoriteCarpark(carparkNo: string): string[] {
   return updated;
 }
 
-// Fetch real-time data from GovTech Data.gov.sg
+// Fetch real-time data from LTA DataMall proxy (/api/carpark-availability) or Data.gov.sg
 export async function fetchLiveCarparkAvailability(): Promise<{
   timestamp: string;
   data: Record<string, CarparkRawData>;
+  source: 'LTA_DATAMALL' | 'DATAGOV_SG' | 'FALLBACK';
 }> {
+  // First attempt: Serverless proxy endpoint connecting to LTA DataMall
+  try {
+    const serverResponse = await fetch('/api/carpark-availability', { cache: 'no-store' });
+    if (serverResponse.ok) {
+      const json = await serverResponse.json();
+      const item = json.items?.[0];
+      if (item && Array.isArray(item.carpark_data)) {
+        const dataMap: Record<string, CarparkRawData> = {};
+        for (const entry of item.carpark_data) {
+          dataMap[entry.carpark_number] = entry;
+        }
+
+        return {
+          timestamp: item.timestamp || new Date().toISOString(),
+          data: dataMap,
+          source: json.source === 'LTA_DATAMALL' ? 'LTA_DATAMALL' : 'DATAGOV_SG',
+        };
+      }
+    }
+  } catch (err) {
+    console.info('Serverless proxy route not responding, attempting direct client fetch:', err);
+  }
+
+  // Second attempt: Direct client fetch to GovTech Data.gov.sg
   try {
     const response = await fetch(API_ENDPOINT, { cache: 'no-store' });
     if (!response.ok) {
@@ -110,13 +135,35 @@ export async function fetchLiveCarparkAvailability(): Promise<{
     return {
       timestamp: item.timestamp || new Date().toISOString(),
       data: dataMap,
+      source: 'DATAGOV_SG',
     };
   } catch (error) {
     console.warn('Real-time API fetch failed or offline, using fallback estimates:', error);
     return {
       timestamp: new Date().toISOString(),
       data: {},
+      source: 'FALLBACK',
     };
+  }
+}
+
+// Fetch connection status of LTA DataMall serverless endpoint
+export async function fetchLTAStatus(): Promise<{
+  status: string;
+  endpoint: string;
+  lta_account_key_configured: boolean;
+  current_active_source: string;
+  cache_entries: number;
+  last_sync: string | null;
+} | null> {
+  try {
+    const res = await fetch('/api/lta/status');
+    if (res.ok) {
+      return await res.json();
+    }
+    return null;
+  } catch {
+    return null;
   }
 }
 
