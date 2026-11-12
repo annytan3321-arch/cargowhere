@@ -94,7 +94,7 @@ export async function fetchLiveCarparkAvailability(): Promise<{
 }> {
   // First attempt: Serverless proxy endpoint connecting to LTA DataMall
   try {
-    const serverResponse = await fetch('/api/carpark-availability', { cache: 'no-store' });
+    const serverResponse = await fetch('/api/carparkavailability', { cache: 'no-store' });
     if (serverResponse.ok) {
       const json = await serverResponse.json();
       const item = json.items?.[0];
@@ -150,14 +150,13 @@ export async function fetchLiveCarparkAvailability(): Promise<{
 // Fetch connection status of LTA DataMall serverless endpoint
 export async function fetchLTAStatus(): Promise<{
   status: string;
-  endpoint: string;
+  uptime?: number;
+  timestamp?: string;
   lta_account_key_configured: boolean;
-  current_active_source: string;
-  cache_entries: number;
-  last_sync: string | null;
+  target_endpoint?: string;
 } | null> {
   try {
-    const res = await fetch('/api/lta/status');
+    const res = await fetch('/api/health');
     if (res.ok) {
       return await res.json();
     }
