@@ -1,0 +1,6 @@
+{
+  "name": "ParkSG Live - Singapore Real-Time Carpark Tracker",
+  "description": "Real-time carpark availability, rates calculator, and live navigation for HDB, URA, and shopping malls across Singapore.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
